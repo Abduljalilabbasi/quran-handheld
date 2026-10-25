@@ -9,3 +9,9 @@ Dry-fit the board and button pieces before assembly. Keep the display free from 
 ## License
 
 Designed by Abduljalil Alabbasi. The enclosure files in this folder are licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/): you may share and adapt them, including commercially, with attribution. They are not covered by the software GPL license.
+
+## Download
+
+- [MakerWorld](https://makerworld.com/en/models/3491420-quran-handheld-e-paper-reader-case-esp32-s3-3-97) (with Bambu Studio print profile)
+- [Printables](https://www.printables.com/model/1890129-quran-handheld-e-paper-reader-case-esp32-s3-397)
+- [Thingiverse](https://www.thingiverse.com/thing:7426709)
