@@ -34,4 +34,4 @@ Project firmware and tools: GPL-3.0-or-later. GxEPD2 by Jean-Marc Zingg uses GPL
 
 Waveshare designed the board. This project links to its schematic and claims no ownership of that PCB.
 
-`hardware/enclosure/esp32quranenclosure.3mf` was supplied by the project owner. It contains a top cover, bottom case and two button parts. Designer and license metadata are blank. CAD is excluded from the software license; confirm original authorship and redistribution terms before public distribution.
+The enclosure (`hardware/enclosure/`) was designed by Abduljalil Alabbasi and is licensed under [Creative Commons Attribution 4.0 International (CC BY 4.0)](https://creativecommons.org/licenses/by/4.0/). It contains a top cover, bottom case and two button parts. The CAD is not covered by the software GPL license.

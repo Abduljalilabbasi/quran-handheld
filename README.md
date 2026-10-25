@@ -22,6 +22,10 @@ An offline Quran reader for the Waveshare ESP32-S3-ePaper-3.97. It reads pre-ren
 
 SD artwork is supplied as a release asset rather than thousands of binary files in Git history. See [rebuilding assets](docs/BUILD_ASSETS.md).
 
+## Device
+
+<img src="docs/images/device-white.jpg" width="480" alt="Quran Handheld in a printed white enclosure showing Surat Al-Fatiha in landscape">
+
 ## Full-page preview
 
 <img src="docs/images/portrait-003.png" width="240" alt="Complete Mushaf page 3 fitted to portrait without UI overlays">
@@ -34,7 +38,7 @@ Artwork originates from the **King Fahd Glorious Quran Printing Complex**, acces
 
 The owner reported successful use of the final power-button and fast blank/restore behaviour. The authoring environment could not start its ESP32 compiler because of a Windows DLL relocation error. The [GitHub Actions build](https://github.com/Abduljalilabbasi/quran-handheld/actions/runs/40175067653) passed on 25 October 2026 with the pinned dependencies. See [validation](docs/VALIDATION.md).
 
-The owner-supplied enclosure 3MF includes the top, bottom and two button parts. Print settings and assembly guidance are in the [enclosure guide](hardware/enclosure/README.md). Printed fit and CAD redistribution terms still need confirmation.
+The enclosure was designed by Abduljalil Alabbasi and is licensed CC BY 4.0. The 3MF includes the top, bottom and two button parts. Print settings and assembly guidance are in the [enclosure guide](hardware/enclosure/README.md).
 
-Firmware and project tools: GPL-3.0-or-later. Artwork, CAD and dependencies retain their own terms. See [LICENSE](LICENSE) and [ATTRIBUTION.md](ATTRIBUTION.md).
+Firmware and project tools: GPL-3.0-or-later. Enclosure CAD: CC BY 4.0. Artwork and dependencies retain their own terms. See [LICENSE](LICENSE) and [ATTRIBUTION.md](ATTRIBUTION.md).
 
