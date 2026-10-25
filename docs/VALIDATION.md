@@ -4,14 +4,14 @@
 
 - Owner reported the idle-flash fix worked.
 - Owner reported final power-button controls and fast white blank/restore worked.
-- SD data: 1,810 landscape and 604 portrait images, 48,000 bytes each.
+- SD data: 1,810 landscape and 604 portrait images, 48,000 bytes each. All 2,414 rebuilt outputs matched the recorded SHA-256 hashes; the release ZIP passed integrity checks.
 - Portrait packing was decoded to verify pixels; representative previews were inspected.
-- The authoring environment could not start its ESP32 compiler (Windows DLL relocation error). The owner compiled and used the sketch separately. There is no recorded passing automated build yet.
+- The authoring environment could not start its ESP32 compiler (Windows DLL relocation error). The owner compiled and used the sketch separately. The [GitHub Actions build](https://github.com/Abduljalilabbasi/quran-handheld/actions/runs/40175067653) passed on 25 October 2026 at commit `2c7d640af7580a15797fcc84b68164c1ddf5fe7e`: 441,038 bytes program storage and 72,360 bytes globals. No firmware changes followed this build.
 - No measured battery runtime, enclosure fit test or complete human Quran proofread is recorded.
 
 ## Public-release checks
 
-- Pass the supplied CI compile using pinned dependencies.
+- Passed: the supplied CI compile using pinned dependencies.
 - Test pages 1, 2, 3, 300 and 604 in both orientations and navigation directions.
 - Compare **all** rendered pages against an authorized Mushaf; inspect split boundaries and landscape overlays for obscured content. File checks are not textual certification.
 - Confirm enclosure authorship/license, battery fit and assembly.
