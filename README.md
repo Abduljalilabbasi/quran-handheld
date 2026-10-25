@@ -40,5 +40,7 @@ The owner reported successful use of the final power-button and fast blank/resto
 
 The enclosure was designed by Abduljalil Alabbasi and is licensed CC BY 4.0. The 3MF includes the top, bottom and two button parts. Print settings and assembly guidance are in the [enclosure guide](hardware/enclosure/README.md).
 
+Download the enclosure: [Thingiverse](https://www.thingiverse.com/thing:7426709) · MakerWorld (in review) · Printables (coming soon)
+
 Firmware and project tools: GPL-3.0-or-later. Enclosure CAD: CC BY 4.0. Artwork and dependencies retain their own terms. See [LICENSE](LICENSE) and [ATTRIBUTION.md](ATTRIBUTION.md).
 
