@@ -32,7 +32,7 @@ This is a digital preview, not a device photograph. Smaller text is the trade-of
 
 Artwork originates from the **King Fahd Glorious Quran Printing Complex**, accessed through **[Quran.ws / quran-svg](https://github.com/quran-ws/quran-svg)**, `mushafs/hafs/kfqc/svg`. No Quran text is AI-generated. SVG pages are browser-rendered, resized and converted to monochrome. [Attribution](ATTRIBUTION.md) distinguishes publisher artwork from Quran.ws metadata.
 
-The owner reported successful use of the final power-button and fast blank/restore behaviour. The authoring environment could not start its ESP32 compiler because of a Windows DLL relocation error. A CI workflow is supplied but has not yet passed. See [validation](docs/VALIDATION.md).
+The owner reported successful use of the final power-button and fast blank/restore behaviour. The authoring environment could not start its ESP32 compiler because of a Windows DLL relocation error. The [GitHub Actions build](https://github.com/Abduljalilabbasi/quran-handheld/actions/runs/40175067653) passed on 25 October 2026 with the pinned dependencies. See [validation](docs/VALIDATION.md).
 
 The owner-supplied enclosure 3MF includes the top, bottom and two button parts. Print settings and assembly guidance are in the [enclosure guide](hardware/enclosure/README.md). Printed fit and CAD redistribution terms still need confirmation.
 
