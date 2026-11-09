@@ -1,4 +1,3 @@
-// SPDX-License-Identifier: GPL-3.0-or-later
 #include <SPI.h>
 #include <SD_MMC.h>
 #include <GxEPD2_BW.h>
@@ -6,6 +5,9 @@
 #include <Wire.h>
 #include <esp_sleep.h>
 #include <driver/rtc_io.h>
+#include "WaveState.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
 
 // ============================================================
 // Waveshare ESP32-S3-ePaper-3.97 Quran Reader
@@ -17,11 +19,8 @@
 //   CENTER hold  = page number and orientation menu
 //   POWER click  = completely blank / restore Quran page
 //
-// PAGE / ORIENTATION MENU
-// LEFT / RIGHT: adjust digit or orientation
-// CENTER click: cycle digits, then orientation
-// CENTER hold: apply and read
-// POWER click: close menu and blank
+// PAGE MENU: click cycles units/tens/hundreds/orientation; hold applies.
+// Inputs continue during refresh; the display catches up to the latest target.
 //
 // LAST POSITION
 //   Current Quran screen is stored in ESP32 NVS and survives
@@ -115,6 +114,34 @@ void applyOrientation()
 // Fast refresh counter; full refresh occurs only when explicitly requested.
 uint8_t fastRefreshCount = 0;
 
+
+// Only requested state is shared. SD, display, I2C and NVS stay on loop task.
+WaveState waveRequested;
+portMUX_TYPE waveMux=portMUX_INITIALIZER_UNLOCKED;
+TaskHandle_t waveInputHandle=nullptr;
+bool waveReady=false;
+uint32_t wavePaintedRevision=0,waveGaugeDone=0;
+constexpr uint32_t WAVE_SETTLE_MS=180;
+
+struct WaveButton {
+  int pin;bool activeHigh;uint32_t holdMs;
+  bool raw=false,stable=false,armed=false;
+  uint32_t changed=0,down=0;
+  void begin() {raw=stable=(digitalRead(pin)==(activeHigh?HIGH:LOW));changed=millis();}
+  uint8_t poll() {
+    uint32_t now=millis();bool level=(digitalRead(pin)==(activeHigh?HIGH:LOW));
+    if(level!=raw){raw=level;changed=now;}
+    if(raw==stable || uint32_t(now-changed)<20)return 0;
+    stable=raw;
+    if(stable){down=now;armed=true;return 0;}
+    if(!armed)return 0;
+    armed=false;return uint32_t(now-down)>=holdMs?2:1;
+  }
+};
+WaveButton waveButtons[]={
+  {BTN_LEFT,false,900},{BTN_RIGHT,false,900},{BTN_PRESS,false,900},
+  {BTN_POWER,true,900},{BTN_BOOT,false,5000}
+};
 
 // ============================================================
 // Standard 604-page Madinah Mushaf navigation
@@ -1277,116 +1304,91 @@ void setup()
     delay(40);
   }
   markActivity();
+  startWaveInput();
 }
 
 
-// ============================================================
-// LOOP
-// ============================================================
-
-void loop()
-{
-  if (readPowerShortPress())
-  {
-    toggleScreenFromPower();
-    return;
+// ---------------- Independent input and coalesced display updates ----------------
+void waveSubmit(WaveEvent event) {
+  uint32_t now=millis();
+  portENTER_CRITICAL(&waveMux);
+  waveRequested.apply(event,now);
+  portEXIT_CRITICAL(&waveMux);
+}
+WaveState waveSnapshot() {
+  portENTER_CRITICAL(&waveMux);
+  WaveState copy=waveRequested;
+  portEXIT_CRITICAL(&waveMux);
+  return copy;
+}
+void waveInputTask(void*) {
+  for(;;) {
+    uint8_t e=waveButtons[3].poll();if(e==1)waveSubmit(WaveEvent::Power);
+    e=waveButtons[2].poll();if(e)waveSubmit(e==2?WaveEvent::Hold:WaveEvent::Click);
+    if(waveButtons[0].poll())waveSubmit(WaveEvent::Next);
+    if(waveButtons[1].poll())waveSubmit(WaveEvent::Previous);
+    if(waveButtons[4].poll()==2)waveSubmit(WaveEvent::Gauge);
+    bool held=false;for(auto &b:waveButtons)held|=b.raw || b.stable;
+    uint32_t now=millis();
+    portENTER_CRITICAL(&waveMux);
+    waveRequested.anyHeld=held;
+    if(held)waveRequested.lastActivity=now;
+    portEXIT_CRITICAL(&waveMux);
+    vTaskDelay(pdMS_TO_TICKS(5));
   }
-  // ----------------------------------------------------------
-  // Automatic ESP32-only deep sleep after 3 minutes inactivity.
-  // The current e-paper image remains on-screen.
-  // ----------------------------------------------------------
-
-  if ((uint32_t)(millis() - lastActivityMs) >= AUTO_SLEEP_MS)
-  {
-    enterEspDeepSleep();
+}
+void startWaveInput() {
+  waveRequested.screen=currentScreen;waveRequested.count=totalScreens;
+  waveRequested.portrait=portraitMode;waveRequested.blank=screenBlanked;
+  waveRequested.lastActivity=millis();
+  for(auto &b:waveButtons)b.begin();
+  if(xTaskCreatePinnedToCore(waveInputTask,"wave-input",3072,nullptr,2,&waveInputHandle,0)!=pdPASS) {
+    showStatus("INPUT ERROR","Restart reader");return;
   }
-
-  // ----------------------------------------------------------
-  // CENTER:
-  // short = no action while reading
-  // long  = page / orientation menu
-  // ----------------------------------------------------------
-
-  int cp = readCenterPress();
-
-  if (cp == CENTER_LONG)
-  {
-    markActivity();
-    openPageSelectMenu();
-
-    delay(10);
-    return;
+  waveReady=true;
+}
+void wavePaint(const WaveState &s) {
+  if(s.gaugeGeneration!=waveGaugeDone) {
+    waveGaugeDone=s.gaugeGeneration;
+    if(s.blank && !s.menu)handleFuelGaugeResetFromBoot();
   }
-
-  if (cp == CENTER_SHORT)
-  {
-    // No screen action on the reading page; menu clicks are handled separately.
-    markActivity();
-    return;
-  }
-
-
-  // ----------------------------------------------------------
-  // When blanked, ignore arrows.
-  // Long center still works because it is checked above.
-  // ----------------------------------------------------------
-
-  if (screenBlanked)
-  {
-    // While blanked only: hold BOOT for 5 seconds to reset the battery gauge.
-    if (bootHeldForGaugeReset())
-    {
-      handleFuelGaugeResetFromBoot();
-      delay(10);
-      return;
-    }
-
-    delay(10);
-    return;
-  }
-
-
-  // ----------------------------------------------------------
-  // LEFT = NEXT
-  // ----------------------------------------------------------
-
-  if (digitalRead(BTN_LEFT) == LOW)
-  {
-    markActivity();
-    waitForRelease(BTN_LEFT);
-
-    if (currentScreen < totalScreens)
-    {
-      if (portraitMode)
-      {
-        uint16_t page = pageFromScreen(currentScreen);
-        if (page < 604) goToScreen(firstScreenOfPage(page + 1));
-      }
-      else goToScreen(currentScreen + 1);
+  if(s.blank) {
+    blankScreen();saveCurrentPosition();
+  } else if(s.menu) {
+    // Menu layout follows the requested reading orientation. Restore the
+    // committed orientation afterward so NVS always refers to loaded artwork.
+    bool committed=portraitMode;
+    portraitMode=s.portrait;applyOrientation();
+    drawPageSelectMenu(s.digits,s.activeDigit,s.selectedPortrait);
+    portraitMode=committed;applyOrientation();screenBlanked=false;
+  } else {
+    uint16_t previous=currentScreen;bool previousMode=portraitMode;
+    currentScreen=s.screen;portraitMode=s.portrait;applyOrientation();
+    if(loadScreenBytes(currentScreen)) {
+      drawBuffer(false);screenBlanked=false;saveCurrentPosition();
+    } else {
+      currentScreen=previous;portraitMode=previousMode;applyOrientation();
+      showStatus("MISSING PAGE","Check SD files; hold centre to retry");
     }
   }
-
-
-  // ----------------------------------------------------------
-  // RIGHT = PREVIOUS
-  // ----------------------------------------------------------
-
-  if (digitalRead(BTN_RIGHT) == LOW)
-  {
-    markActivity();
-    waitForRelease(BTN_RIGHT);
-
-    if (currentScreen > 1)
-    {
-      if (portraitMode)
-      {
-        uint16_t page = pageFromScreen(currentScreen);
-        if (page > 1) goToScreen(firstScreenOfPage(page - 1));
-      }
-      else goToScreen(currentScreen - 1);
-    }
+  // Do not mark a newer request received during rendering as already painted.
+  wavePaintedRevision=s.revision;
+}
+void loop() {
+  if(!waveReady){delay(100);return;}
+  WaveState s=waveSnapshot();
+  if(s.revision!=wavePaintedRevision && uint32_t(millis()-s.lastInput)>=WAVE_SETTLE_MS)wavePaint(s);
+  s=waveSnapshot();
+  // Preserve original idle sleep, but never sleep with pending navigation,
+  // an open menu, or a held button. Stop sampling before switching to RTC pins.
+  if(!s.menu && !s.anyHeld && s.revision==wavePaintedRevision && uint32_t(millis()-s.lastActivity)>=AUTO_SLEEP_MS) {
+    vTaskSuspend(waveInputHandle);
+    WaveState finalState=waveSnapshot();
+    bool held=digitalRead(BTN_LEFT)==LOW || digitalRead(BTN_RIGHT)==LOW ||
+      digitalRead(BTN_PRESS)==LOW || digitalRead(BTN_POWER)==HIGH || digitalRead(BTN_BOOT)==LOW;
+    if(!held && !finalState.menu && finalState.revision==wavePaintedRevision &&
+       uint32_t(millis()-finalState.lastActivity)>=AUTO_SLEEP_MS) enterEspDeepSleep();
+    vTaskResume(waveInputHandle);
   }
-
-
-  delay(10);
+  delay(5);
 }
