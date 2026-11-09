@@ -1,13 +1,25 @@
-name: Compile ESP32-S3 reader
+name: Compile Waveshare and CrowPanel
 on:
   push:
   pull_request:
   workflow_dispatch:
 permissions:
   contents: read
+concurrency:
+  group: firmware-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   compile:
+    name: Compile ${{ matrix.board }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - board: Waveshare 3.97
+            sketch: firmware/Quran_Reader_DualOrientation
+          - board: CrowPanel 5.79
+            sketch: firmware/CrowPanel_Quran_Full
     steps:
       - uses: actions/checkout@v4
       - uses: arduino/setup-arduino-cli@v2
@@ -17,5 +29,4 @@ jobs:
           arduino-cli core install esp32:esp32@3.3.12 --additional-urls https://espressif.github.io/arduino-esp32/package_esp32_index.json
           arduino-cli lib install "GxEPD2@1.6.9" "Adafruit GFX Library@1.13.0" "Adafruit BusIO@1.17.4"
       - name: Compile
-        run: arduino-cli compile --fqbn "esp32:esp32:esp32s3:USBMode=hwcdc,CDCOnBoot=default,FlashMode=qio,FlashSize=4M,PartitionScheme=default,PSRAM=disabled" firmware/Quran_Reader_DualOrientation
-
+        run: arduino-cli compile --fqbn "esp32:esp32:esp32s3:FlashSize=8M,PSRAM=opi,CDCOnBoot=cdc" "${{ matrix.sketch }}"
