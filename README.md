@@ -1,46 +1,61 @@
-# Quran Handheld — ESP32-S3 e-paper reader
+# Quran Handheld — Waveshare and CrowPanel
 
-**Draft v0.1.0 · personal prototype**
+An offline Quran reader for two ESP32-S3 e-paper boards. Both versions read pre-rendered KFQC/Hafs Mushaf artwork from microSD, with responsive button handling during display refresh. No Wi-Fi or account is needed on the reader.
 
-An offline Quran reader for the Waveshare ESP32-S3-ePaper-3.97. It reads pre-rendered Hafs/Madinah Mushaf images from microSD without Wi-Fi, accounts or a phone.
+**[v0.2.0 pre-release downloads](https://github.com/Abduljalilabbasi/quran-handheld/releases/tag/v0.2.0)** · [Installation](docs/INSTALLATION.md) · [Validation](docs/VALIDATION.md) · [Quran source and attribution](ATTRIBUTION.md)
 
-- Portrait: 604 complete Mushaf pages on a 480 × 800 screen.
-- Landscape: larger text in 1,810 sections (two per page for pages 1–2, three thereafter).
-- Fast page turns, saved reading position and orientation.
-- Side power-button short press: completely blank white screen / restore reading.
-- Three-minute ESP32 deep sleep and wake-aware display initialization.
-- Three-digit page selector followed by portrait/landscape selection.
+## Choose your board
 
-[Installation](docs/INSTALLATION.md) · [Controls](docs/CONTROLS.md) · [Hardware](docs/HARDWARE.md) · [Design decisions](docs/DESIGN.md) · [Quran attribution](ATTRIBUTION.md) · [Enclosure](hardware/enclosure/README.md)
+| | Waveshare ESP32-S3-ePaper-3.97 | Elecrow CrowPanel 5.79-inch |
+|---|---|---|
+| Display | 800 × 480 B/W | 792 × 272 B/W |
+| Reading layouts | Landscape segments and complete portrait pages | Landscape segments |
+| Quran collection | 1,810 landscape screens + 604 portrait pages | 604 pages × 5 parts = 3,020 screens |
+| Firmware | [Quran_Reader_DualOrientation](firmware/Quran_Reader_DualOrientation) | [CrowPanel_Quran_Full](firmware/CrowPanel_Quran_Full) |
+| Setup, pins and controls | [Waveshare guide](docs/WAVESHARE.md) | [CrowPanel guide](docs/CROWPANEL.md) |
+| SD folders | `quran`, `quran_portrait` | `quran579` |
+| Idle sleep | 3-minute MCU sleep with retained display | No automatic MCU sleep in this version |
+| Enclosure | [Original 3MF and browser-viewable STL parts](hardware/enclosure/README.md) | No CrowPanel enclosure supplied yet |
 
-## Start here
+**Firmware and SD images are board-specific. Do not interchange them.**
 
-1. Use the exact Waveshare ESP32-S3-ePaper-3.97 board and a FAT32 microSD.
-2. Extract `Quran_SD_Card.zip` from the draft release. Copy both `quran` and `quran_portrait` to the card root.
-3. Install the Arduino dependencies and upload `firmware/Quran_Reader_DualOrientation/Quran_Reader_DualOrientation.ino`.
-4. Hold the slider centre to select a page/orientation; clicks cycle fields, hold applies.
+## Downloads and installation
 
-SD artwork is supplied as a release asset rather than thousands of binary files in Git history. See [rebuilding assets](docs/BUILD_ASSETS.md).
+Download the two files for your board from the [release](https://github.com/Abduljalilabbasi/quran-handheld/releases/tag/v0.2.0):
 
-## Device
+- **Waveshare:** `Waveshare_Quran_Responsive.zip` and `Waveshare_Quran_SD.zip`.
+- **CrowPanel:** `CrowPanel_Quran_Responsive.zip` and `CrowPanel_Quran_SD.zip`.
 
-<img src="docs/images/device-white.jpg" width="480" alt="Quran Handheld in a printed white enclosure showing Surat Al-Fatiha in landscape">
+Extract the SD ZIP and copy its image folders directly to a FAT32 card's root. Open the firmware `.ino` in its matching folder and keep its companion `.h` file beside it. Install the dependencies and upload as described in the board guide. Existing users keep their board's existing image collection; this firmware update does not require reformatting.
 
-## Full-page preview
+The source code, guides, artwork provenance and enclosure models can be browsed directly on GitHub. The thousands of SD binary images are release downloads, keeping Git history manageable. [Rebuild the images](docs/BUILD_ASSETS.md).
 
-<img src="docs/images/portrait-003.png" width="240" alt="Complete Mushaf page 3 fitted to portrait without UI overlays">
+## Responsive navigation
 
-This is a digital preview, not a device photograph. Smaller text is the trade-off for showing an entire page on a 3.97-inch panel.
+Buttons continue to be sampled while e-paper refresh and file reads run. Every valid press updates the requested position. After a 180ms pause, the screen catches up to the latest request, skipping intermediate positions. An already-started physical refresh must finish first.
 
-## Source and status
+One press means one landscape segment, or one complete page in Waveshare portrait mode. There is no ten-press limit. Centre hold opens the page selector; clicks cycle fields; hold applies. The power/screen button blanks the screen completely and restores reading. [Control details](docs/CONTROLS.md).
 
-Artwork originates from the **King Fahd Glorious Quran Printing Complex**, accessed through **[Quran.ws / quran-svg](https://github.com/quran-ws/quran-svg)**, `mushafs/hafs/kfqc/svg`. No Quran text is AI-generated. SVG pages are browser-rendered, resized and converted to monochrome. [Attribution](ATTRIBUTION.md) distinguishes publisher artwork from Quran.ws metadata.
+## Waveshare enclosure
 
-The owner reported successful use of the final power-button and fast blank/restore behaviour. The authoring environment could not start its ESP32 compiler because of a Windows DLL relocation error. The [GitHub Actions build](https://github.com/Abduljalilabbasi/quran-handheld/actions/runs/40175067653) passed on 25 October 2026 with the pinned dependencies. See [validation](docs/VALIDATION.md).
+![Waveshare reader in its printed enclosure](docs/images/device-white.jpg)
 
-The enclosure was designed by Abduljalil Alabbasi and is licensed CC BY 4.0. The 3MF includes the top, bottom and two button parts. Print settings and assembly guidance are in the [enclosure guide](hardware/enclosure/README.md).
+Designed by Abduljalil Alabbasi, licensed **CC BY 4.0**. [Printing and assembly guide](hardware/enclosure/README.md) · [Top](hardware/enclosure/top_enclosure.stl) · [Bottom](hardware/enclosure/bottom_enclosure.stl) · [Power button](hardware/enclosure/power_button.stl) · [BOOT button](hardware/enclosure/boot_button.stl)
 
-Download the enclosure: [MakerWorld](https://makerworld.com/en/models/3491420-quran-handheld-e-paper-reader-case-esp32-s3-3-97) · [Printables](https://www.printables.com/model/1890129-quran-handheld-e-paper-reader-case-esp32-s3-397) · [Thingiverse](https://www.thingiverse.com/thing:7426709)
+Also available on [MakerWorld](https://makerworld.com/en/models/3491420-quran-handheld-e-paper-reader-case-esp32-s3-3-97), [Printables](https://www.printables.com/model/1890129-quran-handheld-e-paper-reader-case-esp32-s3-397), and [Thingiverse](https://www.thingiverse.com/thing:7426709). These parts fit the Waveshare project; they are not a CrowPanel case.
 
-Firmware and project tools: GPL-3.0-or-later. Enclosure CAD: CC BY 4.0. Artwork and dependencies retain their own terms. See [LICENSE](LICENSE) and [ATTRIBUTION.md](ATTRIBUTION.md).
+## CrowPanel page preview
 
+[![Page 003 as five CrowPanel segments](docs/images/crowpanel-page003.png)](docs/images/crowpanel-page003.png)
+
+Digital preview, not a device photograph. The upper-left part/page indicator has reserved white space so it cannot cover artwork.
+
+## Source, licensing and status
+
+Quran artwork originates from the **King Fahd Glorious Quran Printing Complex**, accessed through **[Quran.ws / quran-svg](https://github.com/quran-ws/quran-svg)**, `mushafs/hafs/kfqc/svg`. The artwork is resized and segmented for these displays; no Quran text is generated or retyped. [Attribution and transformation details](ATTRIBUTION.md).
+
+Both responsive firmwares compiled locally. State/button checks and binary-image integrity checks passed. The new responsive handling still needs on-device validation. Automated pixel conservation is not complete linguistic proofreading of segment boundaries. See [validation](docs/VALIDATION.md) for the scope and limitations.
+
+Firmware and tools: **GPL-3.0-or-later**. Waveshare enclosure CAD: **CC BY 4.0**. Quran artwork and third-party dependencies retain their own terms.
+
+These are two maintained hardware variants of this project in one repository. A GitHub fork is unnecessary merely to support another board; forks are useful for independent development of another repository's codebase. Using Quran artwork and software libraries is handled through attribution and their licenses, not by treating the artwork repository as the firmware's upstream.
