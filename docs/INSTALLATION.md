@@ -1,71 +1,33 @@
-# Installation
+# Installation — choose the correct board
 
-## Prepare the hardware and SD
+| Board | Detailed guide | Firmware folder | Companion header | SD image folders |
+|---|---|---|---|---|
+| Waveshare ESP32-S3-ePaper-3.97 | [Waveshare](WAVESHARE.md) | `firmware/Quran_Reader_DualOrientation` | `WaveState.h` | `quran`, `quran_portrait` |
+| Elecrow CrowPanel 5.79-inch | [CrowPanel](CROWPANEL.md) | `firmware/CrowPanel_Quran_Full` | `ReaderState.h` | `quran579` |
 
-Use the exact Waveshare ESP32-S3-ePaper-3.97 and a USB-C data cable. An 8–32 GB microSD formatted FAT32 is straightforward. Back up before formatting.
+Download the matching firmware and SD ZIP from [v0.2.0](https://github.com/Abduljalilabbasi/quran-handheld/releases/tag/v0.2.0). Extract the SD ZIP before copying its folders to the card root. Use FAT32; back up before formatting. Existing working SD collections can be retained. Do not rename PNG files to BIN or use one board's images on the other.
 
-Extract `Quran_SD_Card.zip` and copy its folders directly to the card root:
+## Arduino dependencies
 
-```text
-SD:/
-  quran/
-    count.txt          # 1810
-    manifest.csv
-    00001.bin ... 01810.bin
-  quran_portrait/
-    count.txt          # 604
-    00001.bin ... 00604.bin
-```
+- ESP32 core **3.3.12** by Espressif Systems.
+- GxEPD2 **1.6.9**.
+- Adafruit GFX Library **1.13.0** and Adafruit BusIO **1.17.4** (CI pins).
+- SD/SD_MMC, SPI, Wire, Preferences and FreeRTOS come with the ESP32 core.
 
-Each BIN is 48,000 bytes. Do not nest the folders or rename PNG files to BIN. Safely eject and insert the card into the reader.
+Use **ESP32S3 Dev Module**. The current verification builds use **8MB flash**, default partition scheme, **OPI PSRAM**, and **USB CDC On Boot enabled** with hardware CDC/JTAG USB mode. This describes the tested build layout, not a claim that both boards have identical physical flash capacity. Preserve your known-working Waveshare upload settings if they differ; the older Waveshare build also fitted the 4MB default partition layout without PSRAM.
 
-## Arduino IDE
-
-1. Install [Arduino IDE](https://www.arduino.cc/en/software).
-2. Add the official ESP32 Boards Manager URL in Preferences if necessary:
-   `https://espressif.github.io/arduino-esp32/package_esp32_index.json`
-3. Install **esp32 by Espressif Systems 3.3.12** in Boards Manager.
-4. In Library Manager, install **GxEPD2 1.6.9**, **Adafruit GFX Library 1.13.0**, and **Adafruit BusIO 1.17.4**.
-5. Open `firmware/Quran_Reader_DualOrientation/Quran_Reader_DualOrientation.ino` inside its matching folder.
-6. Select **ESP32S3 Dev Module**, the actual COM port, and the settings below.
-7. Verify, then Upload.
-
-| Setting | Recorded prototype setting |
-|---|---|
-| CPU | 240 MHz |
-| Flash mode | QIO |
-| Flash size / partition | 4 MB / Default |
-| PSRAM | Disabled |
-| USB mode | Hardware CDC and JTAG |
-| USB CDC on boot | Disabled (FQBN default) |
-| Upload speed | 921600; reduce if necessary |
-| Erase all flash | Disabled |
-
-The board is advertised with 16 MB flash and 8 MB PSRAM. **The 4 MB setting is the recorded build/partition layout, not the physical capacity.** The sketch fits that layout and allocates a 48 KB framebuffer without PSRAM.
-
-If upload fails, consult the [Waveshare Arduino guide](https://docs.waveshare.com/ESP32-S3-ePaper-3.97/Arduino). For manual download mode, hold BOOT while resetting/powering on, then release BOOT and upload. Avoid erasing NVS when preserving the saved page.
-
-## CLI equivalent
+Keep the companion header alongside the `.ino`. Select the actual USB port and upload. Avoid erase-all-flash when preserving the saved reading position.
 
 ```sh
 arduino-cli core update-index --additional-urls https://espressif.github.io/arduino-esp32/package_esp32_index.json
 arduino-cli core install esp32:esp32@3.3.12 --additional-urls https://espressif.github.io/arduino-esp32/package_esp32_index.json
 arduino-cli lib install "GxEPD2@1.6.9" "Adafruit GFX Library@1.13.0" "Adafruit BusIO@1.17.4"
-arduino-cli compile --fqbn "esp32:esp32:esp32s3:USBMode=hwcdc,CDCOnBoot=default,FlashMode=qio,FlashSize=4M,PartitionScheme=default,PSRAM=disabled" firmware/Quran_Reader_DualOrientation
+arduino-cli compile --fqbn "esp32:esp32:esp32s3:FlashSize=8M,PSRAM=opi,CDCOnBoot=cdc" firmware/Quran_Reader_DualOrientation
+arduino-cli compile --fqbn "esp32:esp32:esp32s3:FlashSize=8M,PSRAM=opi,CDCOnBoot=cdc" firmware/CrowPanel_Quran_Full
 ```
 
-Use the IDE to upload, or `arduino-cli upload` with the same FQBN and your actual port. No network is needed by the handheld.
+## Initial checks
 
-## Verify
+Cold startup can flash while establishing the display baseline. Test ordinary turns, rapid repeated presses, reversals and screen blank/restore. Check the part/page indicator and saved position after power-off. On Waveshare, also check portrait mode and wake after the 3-minute idle sleep. On CrowPanel, verify that the card mounts and page 001 through 604 can be selected; GPIO42 must enable the SD supply.
 
-At fresh power-on, a full refresh is expected. Test several pages; select portrait and inspect pages 001, 002 and 003. Test power-key blank/restore twice. Wait over three minutes and test wake. Confirm page and orientation survive power-off.
-
-## Troubleshooting
-
-- **SD ERROR:** mounting failed; check FAT32, contacts and seating.
-- **FILE ERROR / MISSING PAGE:** check root folder placement, name and byte size.
-- **Black blocks in rebuilt pages:** use a browser renderer respecting transparent SVG polygons.
-- **Flash after idle:** keep wake-aware `display.init(115200, !wokeFromButton)`. Display power/RAM must survive sleep.
-- **Faint ghosting:** fast updates trade cleanliness for less flashing. A cold boot triggers a full refresh; no automatic periodic cleaning cycle is currently invoked.
-- **Compiler DLL relocation error:** this authoring environment could not start the Windows ESP32 compiler. Use Arduino IDE or the supplied CI build. It is not an SD problem.
-
+The [validation record](VALIDATION.md) distinguishes compilation and software checks from physical testing. Hardware vendor setup links are in the board guides and [hardware reference](HARDWARE.md).

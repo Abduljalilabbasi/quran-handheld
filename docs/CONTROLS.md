@@ -1,22 +1,22 @@
 # Controls
 
-Left/right refer to the intended flipped landscape assembly: logical left is GPIO6 and right is GPIO4.
+Both readers sample buttons independently while the display refreshes. Each debounced press/release counts; direction holds do not auto-repeat. After a 180ms input pause, the renderer catches up to the latest requested position. A refresh already underway must finish first. No fixed-size page-turn queue or ten-press limit is used.
 
-| Context | Action | Result |
+| Action | Waveshare 3.97-inch | CrowPanel 5.79-inch |
 |---|---|---|
-| Reading | Left/right | Next/previous section in landscape, full page in portrait |
-| Reading | Centre click | No screen action |
-| Reading | Centre hold (~0.9 s) | Open page/orientation selector |
-| Menu | Centre click | Units → tens → hundreds → orientation → units |
-| Menu | Left/right | Change digit or toggle orientation |
-| Menu | Centre hold | Apply page 001–604 and orientation |
-| Reading / blank | Power short press | Plain white / restore Quran page |
-| Menu | Power short press | Close menu and blank |
-| Any | Power long hold | Existing PMIC hardware power control |
+| Forward | LEFT, GPIO6 | Joystick UP, GPIO6 |
+| Backward | RIGHT, GPIO4 | Joystick DOWN, GPIO4 |
+| Centre short while reading | No action | No action |
+| Centre hold 0.9s then release | Page/orientation menu; hold again to apply | Page menu; hold again to apply |
+| Centre short in menu | Units → tens → hundreds → orientation | Units → tens → hundreds |
+| Direction in menu | Change digit or orientation | Change digit |
+| Power/screen short | Power key GPIO1, active HIGH | EXIT GPIO1, active LOW |
+| Power/screen in menu | Close menu and blank | Close menu and blank |
+| Auxiliary | BOOT held 5s while blanked resets AXP2101 gauge | MENU GPIO2 reserved |
+| Idle sleep | After 3 minutes; deferred while menu/open input/pending refresh | No automatic sleep |
 
-The menu is a **page-number selector**, not a selectable Juz/Hizb list, despite legacy naming in older versions. Changing orientation returns to the first section of the selected page.
+In landscape, one press moves one segment. Waveshare portrait mode moves one complete Mushaf page. Invalid menu numbers outside 001–604 cannot be applied. Arrows are ignored while blanked; centre hold can open the menu from blank.
 
-After three minutes in the main-loop inactivity state, the ESP32 sleeps while e-paper retains its image. Power uses GPIO1/EXT0 wake and toggles the retained blank/visible state. Slider keys use EXT1. The menu has a blocking input loop, so it currently does not auto-sleep while open.
+The page selector starts from the latest requested position, even if the screen is still finishing an older refresh. Blank/restore requests are also handled after an in-progress physical refresh finishes. Waveshare long power holds are left to the PMIC hardware.
 
-The old maintenance action is retained: while blank, holding BOOT for five seconds resets the battery gauge and briefly shows its confirmation. It is not a normal reading action.
-
+Details: [Waveshare](WAVESHARE.md) · [CrowPanel](CROWPANEL.md) · [Responsive implementation](RESPONSIVE_NAVIGATION.md).

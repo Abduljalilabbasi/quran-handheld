@@ -1,24 +1,26 @@
-# Validation and release status
+# Validation — v0.2.0
 
-## Available evidence
+Both responsive versions were compiled locally with ESP32 core 3.3.12 and GxEPD2 1.6.9 using `esp32:esp32:esp32s3:FlashSize=8M,PSRAM=opi,CDCOnBoot=cdc`.
 
-- Owner reported the idle-flash fix worked.
-- Owner reported final power-button controls and fast white blank/restore worked.
-- SD data: 1,810 landscape and 604 portrait images, 48,000 bytes each. All 2,414 rebuilt outputs matched the recorded SHA-256 hashes; the release ZIP passed integrity checks.
-- Portrait packing was decoded to verify pixels; representative previews were inspected.
-- The authoring environment could not start its ESP32 compiler (Windows DLL relocation error). The owner compiled and used the sketch separately. The [GitHub Actions build](https://github.com/Abduljalilabbasi/quran-handheld/actions/runs/40175067653) passed on 25 October 2026 at commit `2c7d640af7580a15797fcc84b68164c1ddf5fe7e`: 441,038 bytes program storage and 72,360 bytes globals. No firmware changes followed this build.
-- No measured battery runtime, enclosure fit test or complete human Quran proofread is recorded.
+| Firmware | Program storage | Global RAM | Software checks |
+|---|---:|---:|---|
+| Waveshare responsive | 442,924 bytes | 73,200 bytes | 6 state and 4 button checks |
+| CrowPanel responsive | 403,424 bytes | 105,632 bytes | 7 state and 3 button checks |
 
-## Public-release checks
+The state/debounce method bodies were evaluated as compile-time C++ tests, with constexpr qualifiers and injected clock/level inputs for the harness. Cases include repeated taps during a captured refresh, mixed directions, bounds, menu transitions, blank/restore, long holds and wake-held release handling. These checks do not simulate physical scheduling, electrical bounce or panel timing.
 
-- Passed: the supplied CI compile using pinned dependencies.
-- Test pages 1, 2, 3, 300 and 604 in both orientations and navigation directions.
-- Compare **all** rendered pages against an authorized Mushaf; inspect split boundaries and landscape overlays for obscured content. File checks are not textual certification.
-- Confirm enclosure authorship/license, battery fit and assembly.
-- Test short/long power presses on USB and battery, after sleep, while blank and visible.
-- Test invalid page numbers, missing files, orientation persistence and menu cycling.
+The new [Actions workflow](../.github/workflows/compile.yml) compiles both board variants. Its actual run status is visible in the repository's Actions tab; do not infer a CI pass merely from a local build.
 
-## Known limitations
+## Image verification
 
-The menu does not auto-sleep. Partial updates can ghost, and the refresh counter does not currently schedule a cleaning cycle. Landscape overlays have not been audited for all pages. Flash-free wake requires retained display power/RAM. Battery-gauge maintenance registers need revision checks on other hardware. This is a prototype, not a publisher-reviewed Quran device.
+CrowPanel: 604 pages, 5 segments each, 3,020 files; each is 26,928 bytes. Total image data: 81,322,560 bytes. All checksums, dimensions, white header rows and ink counts were checked. Every black pixel in each final scaled/thresholded source page is present exactly once across its segments. The converter was smoke-tested for reproducibility. Representative pages and difficult boundaries were visually inspected. [Manifest](crowpanel-manifest.json).
 
+Waveshare: the existing 1,810 landscape and 604 portrait BIN collection is reused. No image bytes were changed for responsive navigation. Historical provenance is in [source-manifest.json](source-manifest.json).
+
+Pixel conservation is not complete linguistic proofreading. CrowPanel segmentation uses geometric assignment of small marks near boundaries; its correctness across every mark on every page has not been certified. Keep the source PNGs as reference and report any suspicious boundary.
+
+## Hardware status
+
+The owner previously reported working Waveshare reading and power-button blank/restore, and tested the CrowPanel sample enough to identify control/refresh issues. The new responsive updates and latest SD-power fix have compiled, but their complete on-device behavior has not been confirmed in this release. They are published as a **pre-release** for testing.
+
+Test repeated presses while refresh is busy, reversals, bounds, page selection, blank/restore and saved position on both boards. On Waveshare, also test portrait and idle sleep/wake. On CrowPanel, test SD mounting and GPIO42 power enable. The old Windows compiler-startup issue is historical and no longer blocks local builds.

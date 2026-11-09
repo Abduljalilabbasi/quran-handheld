@@ -34,3 +34,15 @@ A mismatch may reflect changed upstream artwork or rasterizer versions. Review b
 
 The asset source is SVG; the PNGs are browser-rendered intermediates. The reader consumes packed monochrome BIN files, not PNG files directly.
 
+
+
+## CrowPanel 5.79-inch SD collection
+
+Use the existing original KFQC/Quran.ws PNG cache (`001.png` through `604.png`):
+
+```sh
+python -m pip install -r tools/requirements-crowpanel.txt
+python tools/build_crowpanel_pages.py --source path/to/cache_browser_png --output build/crowpanel
+```
+
+Copy the generated `build/crowpanel/SD_CARD/quran579` folder to the SD root. The converter creates five 792x272 segments per page, reserves 24 white header rows, checks reconstruction/ink conservation and emits a manifest. See [CrowPanel](CROWPANEL.md) and [attribution](../ATTRIBUTION.md) for processing details and limitations. This collection cannot be used with Waveshare firmware.
