@@ -43,3 +43,9 @@ Project firmware and tools: GPL-3.0-or-later. GxEPD2 by Jean-Marc Zingg uses GPL
 Waveshare designed the board. This project links to its schematic and claims no ownership of that PCB.
 
 The enclosure (`hardware/enclosure/`) was designed by Abduljalil Alabbasi and is licensed under [Creative Commons Attribution 4.0 International (CC BY 4.0)](https://creativecommons.org/licenses/by/4.0/). It contains a top cover, bottom case and two button parts. The CAD is not covered by the software GPL license.
+
+## LilyGO T5S3 Pro port
+
+Uses the existing Waveshare image collection. Landscape removes only empty outer margins and proportionally enlarges the remaining artwork within 960 × 504; portrait preserves the complete source page at 540 × 900. No text is generated, reflowed or retyped.
+
+Hardware support follows [LilyGO's official Pro repository](https://github.com/Xinyuan-LilyGO/T5S3-4.7-e-paper-PRO), pinned to `87436b5c9d0d4fc09f44ef43a4fb5d41a757494a`. The release includes its unchanged LGPL-3.0 epdiy library and license. Fira Sans comes from the same vendor example and retains its [SIL Open Font License](LICENSES/FiraSans-OFL.txt). The GT911 Home-key bit and GPIO11 light level follow the vendor driver/UI. Reader code retains GPL-3.0-or-later.

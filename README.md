@@ -1,10 +1,18 @@
-# Quran Handheld — Waveshare and CrowPanel
+# Quran Handheld — Waveshare, CrowPanel and LilyGO
 
-An offline Quran reader for two ESP32-S3 e-paper boards. Both versions read pre-rendered KFQC/Hafs Mushaf artwork from microSD, with responsive button handling during display refresh. No Wi-Fi or account is needed on the reader.
+An offline Quran reader for three ESP32-S3 e-paper boards. All versions read pre-rendered KFQC/Hafs Mushaf artwork from microSD, with responsive button handling during display refresh. No Wi-Fi or account is needed on the reader.
 
 **[v0.2.0 pre-release downloads](https://github.com/Abduljalilabbasi/quran-handheld/releases/tag/v0.2.0)** · [Installation](docs/INSTALLATION.md) · [Validation](docs/VALIDATION.md) · [Quran source and attribution](ATTRIBUTION.md)
 
-## Choose your board
+## LilyGO T5S3 Pro 4.7-inch — new in v0.3.0
+
+[Arduino IDE guide and controls](docs/LILYGO.md) · [Browse firmware](firmware/LilyGO_Quran_Reader) · [Download LilyGO package](https://github.com/Abduljalilabbasi/quran-handheld/releases/tag/v0.3.0)
+
+For the **H752-01 Pro with TPS65185**, 960 × 540. Supports enlarged landscape segments, complete portrait pages, responsive navigation, page/orientation menu, blank/restore, battery percentage and circular Home-button frontlight on/off. The owner confirmed the light control; serial confirmed SD image reads during navigation. This port keeps the MCU awake. No LilyGO enclosure is supplied.
+
+Uses the existing **Waveshare SD pack** (`quran` and `quran_portrait`), with Arduino ESP32 **2.0.14** and the supplied LilyGO-patched **epdiy** library. The standard T5 S3 and older H752 require different drivers.
+
+## Waveshare and CrowPanel
 
 | | Waveshare ESP32-S3-ePaper-3.97 | Elecrow CrowPanel 5.79-inch |
 |---|---|---|
@@ -17,7 +25,7 @@ An offline Quran reader for two ESP32-S3 e-paper boards. Both versions read pre-
 | Idle sleep | 3-minute MCU sleep with retained display | No automatic MCU sleep in this version |
 | Enclosure | [Original 3MF and browser-viewable STL parts](hardware/enclosure/README.md) | No CrowPanel enclosure supplied yet |
 
-**Firmware and SD images are board-specific. Do not interchange them.**
+**Firmware is board-specific. LilyGO explicitly reuses the Waveshare SD images; CrowPanel needs its own image pack.**
 
 ## Downloads and installation
 
@@ -58,4 +66,4 @@ Both responsive firmwares compiled locally. State/button checks and binary-image
 
 Firmware and tools: **GPL-3.0-or-later**. Waveshare enclosure CAD: **CC BY 4.0**. Quran artwork and third-party dependencies retain their own terms.
 
-These are two maintained hardware variants of this project in one repository. A GitHub fork is unnecessary merely to support another board; forks are useful for independent development of another repository's codebase. Using Quran artwork and software libraries is handled through attribution and their licenses, not by treating the artwork repository as the firmware's upstream.
+These are three maintained hardware variants of this project in one repository. A GitHub fork is unnecessary merely to support another board; forks are useful for independent development of another repository's codebase. Using Quran artwork and software libraries is handled through attribution and their licenses, not by treating the artwork repository as the firmware's upstream.
