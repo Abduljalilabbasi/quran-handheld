@@ -1,4 +1,4 @@
-name: Compile Waveshare and CrowPanel
+name: Compile all Quran readers
 on:
   push:
   pull_request:
@@ -30,3 +30,22 @@ jobs:
           arduino-cli lib install "GxEPD2@1.6.9" "Adafruit GFX Library@1.13.0" "Adafruit BusIO@1.17.4"
       - name: Compile
         run: arduino-cli compile --fqbn "esp32:esp32:esp32s3:FlashSize=8M,PSRAM=opi,CDCOnBoot=cdc" "${{ matrix.sketch }}"
+
+  lilygo:
+    name: Compile LilyGO T5S3 Pro
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: arduino/setup-arduino-cli@v2
+      - name: Fetch pinned LilyGO display driver
+        run: |
+          git init /tmp/lilygo-pro
+          git -C /tmp/lilygo-pro remote add origin https://github.com/Xinyuan-LilyGO/T5S3-4.7-e-paper-PRO.git
+          git -C /tmp/lilygo-pro fetch --depth 1 origin 87436b5c9d0d4fc09f44ef43a4fb5d41a757494a
+          git -C /tmp/lilygo-pro checkout --detach FETCH_HEAD
+      - name: Install compatible core
+        run: |
+          arduino-cli core update-index --additional-urls https://espressif.github.io/arduino-esp32/package_esp32_index.json
+          arduino-cli core install esp32:esp32@2.0.14 --additional-urls https://espressif.github.io/arduino-esp32/package_esp32_index.json
+      - name: Compile
+        run: arduino-cli compile --fqbn "esp32:esp32:esp32s3:FlashSize=16M,PartitionScheme=app3M_fat9M_16MB,PSRAM=opi,CDCOnBoot=cdc" --library /tmp/lilygo-pro/lib/epdiy firmware/LilyGO_Quran_Reader
